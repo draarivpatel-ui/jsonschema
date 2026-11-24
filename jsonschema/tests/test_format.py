@@ -6,7 +6,7 @@ from unittest import TestCase
 
 from jsonschema import FormatChecker, ValidationError
 from jsonschema.exceptions import FormatError
-from jsonschema.validators import Draft4Validator
+from jsonschema.validators import Draft4Validator, Draft202012Validator
 
 BOOM = ValueError("Boom!")
 BANG = ZeroDivisionError("Bang!")
@@ -89,3 +89,31 @@ class TestFormatChecker(TestCase):
             repr(checker),
             "<FormatChecker checkers=['bar', 'baz', 'foo']>",
         )
+
+
+class TestTrailingNewlineFormats(TestCase):
+    """
+    Regression tests for https://github.com/python-jsonschema/jsonschema/issues/1588.
+
+    Some of the third party validator libraries the format checkers
+    delegate to accept a single trailing newline (U+000A), which none of
+    the corresponding grammars allow.
+    """
+
+    def test_trailing_newlines_are_rejected(self):
+        cases = [
+            ("date-time", "1985-04-12T23:20:50Z"),
+            ("time", "23:20:50.52Z"),
+            ("uri", "http://foo.bar/"),
+            ("uri-reference", "http://foo.bar/baz"),
+            ("iri", "http://foo.bar/"),
+            ("iri-reference", "http://foo.bar/baz"),
+            ("hostname", "example.com"),
+        ]
+        checker = Draft202012Validator.FORMAT_CHECKER
+        for format, instance in cases:
+            with self.subTest(format=format):
+                if format not in checker.checkers:
+                    self.skipTest(f"no {format!r} checker is installed")
+                self.assertTrue(checker.conforms(instance, format))
+                self.assertFalse(checker.conforms(instance + "\n", format))
