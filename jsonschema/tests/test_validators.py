@@ -2047,6 +2047,25 @@ class TestDraft201909Validator(ValidatorTestMixin, TestCase):
     valid: tuple[dict, dict] = ({}, {})
     invalid = {"type": "integer"}, "foo"
 
+    def test_unevaluatedItems_with_boolean_items(self):
+        schema = {"items": True, "unevaluatedItems": False}
+        self.assertTrue(self.Validator(schema).is_valid([1, 2, 3]))
+
+        schema = {"items": False, "unevaluatedItems": False}
+        self.assertTrue(self.Validator(schema).is_valid([]))
+        self.assertFalse(self.Validator(schema).is_valid([1]))
+
+    def test_unevaluatedItems_with_boolean_items_in_applicator(self):
+        for applicator in ["allOf", "anyOf", "oneOf"]:
+            with self.subTest(applicator=applicator):
+                schema = {
+                    applicator: [{"items": True}],
+                    "unevaluatedItems": False,
+                }
+                self.assertTrue(
+                    self.Validator(schema).is_valid([1, 2, 3]),
+                )
+
 
 class TestDraft202012Validator(ValidatorTestMixin, TestCase):
     Validator = validators.Draft202012Validator
