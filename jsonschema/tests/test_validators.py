@@ -2047,6 +2047,13 @@ class TestDraft201909Validator(ValidatorTestMixin, TestCase):
     valid: tuple[dict, dict] = ({}, {})
     invalid = {"type": "integer"}, "foo"
 
+    def test_boolean_items_with_unevaluated_items(self):
+        # https://github.com/python-jsonschema/jsonschema/issues/1590
+        # A boolean `items` schema applies to every item, so no items are
+        # left unevaluated (and no TypeError should be raised).
+        schema = {"items": True, "unevaluatedItems": False}
+        self.assertEqual(list(self.Validator(schema).iter_errors([1, 2])), [])
+
 
 class TestDraft202012Validator(ValidatorTestMixin, TestCase):
     Validator = validators.Draft202012Validator

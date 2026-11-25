@@ -292,7 +292,8 @@ def find_evaluated_item_indexes_by_schema(validator, instance, schema):
         if "additionalItems" in schema:
             return list(range(len(instance)))
 
-        if validator.is_type(schema["items"], "object"):
+        items = schema["items"]
+        if isinstance(items, bool) or validator.is_type(items, "object"):
             return list(range(len(instance)))
         evaluated_indexes += list(range(len(schema["items"])))
 
